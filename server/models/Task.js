@@ -5,7 +5,7 @@ const taskSchema = new mongoose.Schema({
     description: { type: String },
     status: { type: String, enum: ['Pending', 'In Progress', 'Completed'], default: 'Pending' },
     deadline: { type: Date },
-    assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     workspace: { type: mongoose.Schema.Types.ObjectId, ref: 'Workspace' },
     createdAt: { type: Date, default: Date.now },
     startTime: {type: Date},
