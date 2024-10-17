@@ -70,20 +70,20 @@ const Navbar = () => {
             <div className="flex items-center justify-between flex-grow">
               <div className="flex-shrink-0">
                 <h1 className="text-lg font-semibold tracking-widest text-white uppercase">
-                  <a href="#">Administration</a>
+                  <Link to={'/'}>CodeFest</Link>
                 </h1>
               </div>
               {/* Desktop menu */}
               <div className="hidden lg:block">
                 <div className="flex items-center">
                   {/* Dashboard link */}
-                  <a
-                    href="#"
+                  <Link
+                    to={'/'}
                     className="flex flex-row items-center px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-md focus:outline-none focus:text-white focus:bg-gray-700"
                   >
                     <FiHome className="w-4 h-4" />
                     <span className="ml-2">Dashboard</span>
-                  </a>
+                  </Link>
                   {/* Posts link */}
                   <Link
                    to={'/workspace'}
@@ -93,13 +93,13 @@ const Navbar = () => {
                     <span className="ml-2">Workspace</span>
                   </Link>
                   {/* Comments link */}
-                  <a
-                    href="#"
+                  <Link
+                    to={'/your-task'}
                     className="flex flex-row items-center px-3 py-2 ml-4 text-sm font-medium text-gray-300 rounded-md hover:text-white hover:bg-gray-700 focus:outline-none focus:text-white focus:bg-gray-700"
                   >
                     <FiMessageCircle className="w-4 h-4" />
-                    <span className="ml-2">Comments</span>
-                  </a>
+                    <span className="ml-2">Your Task</span>
+                  </Link>
                   {/* Settings link */}
                   <a
                     href="#"

@@ -1,5 +1,6 @@
-import Workspace from "../models/Workspace.js";
-import User from "../models/Users.js";
+import Workspace from '../models/Workspace.js';
+import Task from '../models/Task.js';
+import User from '../models/Users.js';
 import jwt from 'jsonwebtoken';
 import { transporter, mailOptions } from './mail.js'; // Using the mail.js file
 
@@ -140,7 +141,7 @@ export const sendMemberInvitation = async (req, res) => {
         res.status(200).json({ message: 'Invitations sent successfully' });
     } catch (error) {
         console.log(error);
-        
+
         res.status(500).json({ message: 'Something went wrong' });
     }
 };
@@ -168,7 +169,7 @@ export const acceptMemberInvitation = async (req, res) => {
         workspace.members.push(member._id);
         await workspace.save();
 
-        res.status(200).json({ message: 'Member added to workspace successfully', success:true, workspaceId:workspace._id });
+        res.status(200).json({ message: 'Member added to workspace successfully', success: true, workspaceId: workspace._id });
     } catch (error) {
         res.status(500).json({ message: 'Invalid or expired token' });
     }
@@ -311,5 +312,89 @@ export const getWorkspaceById = async (req, res) => {
     } catch (error) {
         console.error("Error fetching workspace:", error);
         res.status(500).json({ message: 'Error fetching workspace' });
+    }
+};
+
+export const getWorkspaceAnalytics = async (req, res) => {
+    const { workspaceId } = req.params; // Assuming workspaceId is passed as a URL parameter
+
+    try {
+        // Fetch the workspace and populate teamLead, members, and tasks
+        const workspace = await Workspace.findById(workspaceId)
+            .populate('teamLead', 'name email timeSpentPerDay')
+            .populate('members', 'name email timeSpentPerDay')
+            .populate('tasks');
+
+        if (!workspace) {
+            return res.status(404).json({ message: 'Workspace not found' });
+        }
+
+        // Get all tasks for the workspace
+        const tasks = await Task.find({ workspace: workspaceId });
+
+        // Initialize an object to store task counts and time spent by each member
+        const memberStats = {};
+
+        // Initialize total team stats
+        let totalTasksCompleted = 0;
+        let totalTimeSpentByTeam = 0;
+
+        // Helper function to calculate total time spent from timeSpentPerDay array
+        const calculateTotalTimeSpent = (timeSpentPerDay) => {
+            return timeSpentPerDay.reduce((total, session) => total + (session.timeSpent || 0), 0);
+        };
+
+        // Populate initial stats for team lead and members
+        if (workspace.teamLead) {
+            memberStats[workspace.teamLead._id] = {
+                name: workspace.teamLead.name,
+                email: workspace.teamLead.email,
+                tasksCompleted: 0,
+                totalTimeSpent: calculateTotalTimeSpent(workspace.teamLead.timeSpentPerDay),
+                timeSpentHistory: workspace.teamLead.timeSpentPerDay // Include history
+            };
+        }
+
+        workspace.members.forEach((member) => {
+            memberStats[member._id] = {
+                name: member.name,
+                email: member.email,
+                tasksCompleted: 0,
+                totalTimeSpent: calculateTotalTimeSpent(member.timeSpentPerDay),
+                timeSpentHistory: member.timeSpentPerDay // Include history
+            };
+        });
+
+        // Calculate tasks completed and time spent by each member
+        tasks.forEach((task) => {
+            task.assignedTo.forEach((userId) => {
+                if (memberStats[userId]) {
+                    if (task.status === 'Completed') {
+                        memberStats[userId].tasksCompleted += 1;
+                        totalTasksCompleted += 1;
+                    }
+                    memberStats[userId].totalTimeSpent += task.timeSpent || 0;
+                    totalTimeSpentByTeam += task.timeSpent || 0;
+                }
+            });
+        });
+
+        // Respond with detailed workspace analytics
+        res.status(200).json({
+            workspace: {
+                name: workspace.name,
+                description: workspace.description,
+                admin: workspace.admin,
+                teamLead: workspace.teamLead,
+                members: workspace.members.length,
+                tasks: workspace.tasks.length
+            },
+            memberStats,
+            totalTasksCompleted,
+            totalTimeSpentByTeam
+        });
+    } catch (error) {
+        console.error('Error fetching workspace analytics:', error);
+        res.status(500).json({ message: 'Error fetching workspace analytics' });
     }
 };

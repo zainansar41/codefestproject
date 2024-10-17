@@ -6,7 +6,7 @@ dotenv.config();
 export const verifyUser = (req, res, next) => {
     console.log(req.user);
     const token = req.header("Authorization");
-    console.log(token);
+    console.log("token   ",token);
     
     if (!token) {
         return res.status(401).json({ message: "No token, authorization denied" });

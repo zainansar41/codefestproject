@@ -2,6 +2,7 @@ import axios from "axios";
 axios.defaults.baseURL = "http://localhost:5000"
 
 
+
 export async function SignupUser(data) {
     try {
         console.log(data);
@@ -322,3 +323,157 @@ export const changeTaskStatus = async (taskId, newStatus) => {
     }
 };
 
+export async function getTaskbyId(taskId) {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            return { success: false, message: 'No token found' };
+        }
+
+        const response = await axios.get(
+            `/tasks/${taskId}`,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error('Error changing task status:', error);
+        return { success: false, message: 'Failed to change task status' };
+    }
+}
+
+
+export const startTask = async (taskId) => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            return { success: false, message: 'No token found' };
+        }
+
+        console.log(token);
+
+
+        const response = await axios.put(
+            `/tasks/${taskId}/start`, {},
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error('Error changing task status:', error);
+        return { success: false, message: 'Failed to change task status' };
+    }
+};
+export const endTask = async (taskId) => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            return { success: false, message: 'No token found' };
+        }
+
+        const response = await axios.put(
+            `/tasks/${taskId}/stop`, {},
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `${token}`,
+                },
+            }
+        );
+
+        return response.data;
+    } catch (error) {
+        console.error('Error changing task status:', error);
+        return { success: false, message: 'Failed to change task status' };
+    }
+};
+
+export const fetchChatsForWorkspace = async (workspaceId) => {
+    try {
+        const response = await axios.get(`/workspace/${workspaceId}/chats`);
+
+        // The data from Axios is in the 'data' field
+        return response.data.chats;
+    } catch (error) {
+        console.error('Error fetching chat messages:', error);
+        return [];
+    }
+};
+
+export const getTaskByUser = async () => {
+    try {
+        const userID = await localStorage.getItem('userID')
+        const response = await axios.get(`/tasks/user/${userID}`);
+        return response.data
+    } catch (error) {
+        console.error('Error fetching chat messages:', error);
+        return [];
+    }
+}
+export const fetchAnalytics = async (workspaceId) => {
+    try {
+        const response = await axios.get(`/workspace/${workspaceId}/analytics`);
+        return response.data
+    } catch (error) {
+        console.error('Error fetching chat messages:', error);
+        return [];
+    }
+}
+
+
+// Start daily session
+export const startDailySession = async (userId) => {
+    try {
+        const response = await axios.post('/start-time-session', { userId });
+
+        if (response.data.success) {
+        } else {
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('Error starting daily session:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+// End daily session
+export const endDailySession = async (userId) => {
+    try {
+        const response = await axios.post('/stop-time-session', { userId });
+
+        if (response.data.success) {
+        } else {
+        }
+
+        return response.data;
+    } catch (error) {
+        console.error('Error ending daily session:', error);
+        return { success: false, error: error.message };
+    }
+};
+
+export const getUserByID = async (userId) => {
+    try {
+        const response = await axios.get(`/getUser/${userId}`);
+
+        console.log(response.data);
+        
+       
+
+        return response.data.user;
+    } catch (error) {
+        console.error('Error ending daily session:', error);
+        return { success: false, error: error.message };
+    }
+}

@@ -51,7 +51,6 @@ io.on('connection', (socket) => {
     console.log(`User joined workspace: ${workspaceId}`);
   });
 
-  // Send and receive messages
   socket.on('sendMessage', async (data) => {
     const { workspaceId, message, senderId } = data;
 
@@ -60,14 +59,20 @@ io.on('connection', (socket) => {
       workspace: workspaceId,
       sender: senderId,
       message,
-      readBy: [senderId], // The sender has already "read" their own message
+      readBy: [senderId],
     });
 
     try {
       const savedChat = await newChat.save();
 
+      // Populate the sender field with 'name' and 'email'
+      const populatedChat = await Chat.findById(savedChat._id).populate('sender', 'name email');
+
+      console.log(populatedChat);
+      
+
       // Broadcast the message to everyone in the workspace
-      io.to(workspaceId).emit('receiveMessage', savedChat);
+      io.to(workspaceId).emit('receiveMessage', populatedChat);
     } catch (err) {
       console.error('Error saving chat:', err);
     }

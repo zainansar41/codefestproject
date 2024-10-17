@@ -71,27 +71,26 @@ export const deleteTask = async (req, res) => {
     }
 };
 
-// Get tasks by workspace
 export const getTasksByWorkspace = async (req, res) => {
-    const { workspaceId } = req.params;
-
-    console.log("asdjsa dasj, ", req.params);
-    
+    const { workspaceId } = req.params; // Assuming workspaceId is passed in the URL
 
     try {
-        // Find tasks related to the workspace
-        const tasks = await Task.find({ workspace: workspaceId });
+        // Find tasks by workspace and populate the assignedTo field with name and email
+        const tasks = await Task.find({ workspace: workspaceId })
+            .populate('assignedTo', 'name email'); // Populate name and email of assigned users
 
-        // if (tasks.length === 0) {
+        // // If no tasks found
+        // if (!tasks || tasks.length === 0) {
         //     return res.status(404).json({ message: 'No tasks found for this workspace' });
         // }
 
+        // Respond with the tasks
         res.status(200).json({ tasks, success: true });
     } catch (error) {
-        res.status(500).json({ message: 'Something went wrong' });
+        console.error('Error fetching tasks:', error);
+        res.status(500).json({ message: 'Error fetching tasks' });
     }
 };
-
 // Get tasks by workspace and status
 export const getTasksByWorkspaceAndStatus = async (req, res) => {
     const { workspaceId, status } = req.params;
@@ -194,7 +193,7 @@ export const startTask = async (req, res) => {
         task.startTime = Date.now();
         await task.save();
 
-        res.status(200).json({ message: 'Task started successfully', task });
+        res.status(200).json({ message: 'Task started successfully', task, success: true });
     } catch (error) {
         res.status(500).json({ message: 'Something went wrong' });
     }
@@ -227,7 +226,7 @@ export const stopTask = async (req, res) => {
         task.timeSpent = task.timeSpent ? task.timeSpent + timeSpent : timeSpent;
         await task.save();
 
-        res.status(200).json({ message: 'Task stopped successfully', task });
+        res.status(200).json({ message: 'Task stopped successfully', task, success: true });
     } catch (error) {
         res.status(500).json({ message: 'Something went wrong' });
     }
@@ -239,7 +238,7 @@ export const changeTaskStatus = async (req, res) => {
     const userId = req.user.id; // Assuming user ID is stored in req.user
 
     console.log("changeTaskStatus");
-    
+
 
     try {
         // Find the task
@@ -265,12 +264,61 @@ export const changeTaskStatus = async (req, res) => {
         await task.save();
 
         console.log(task);
-        
 
-        res.status(200).json({ message: 'Task status updated successfully', task, success:true });
+
+        res.status(200).json({ message: 'Task status updated successfully', task, success: true });
     } catch (error) {
         console.log(error);
-        
+
         res.status(500).json({ message: 'Something went wrong' });
+    }
+};
+
+
+export const getTaskByID = async (req, res) => {
+    const { taskId } = req.params; // Assuming the task ID is provided in the URL
+
+    try {
+        // Find task by ID and populate any necessary fields (e.g., assignedTo users)
+        const task = await Task.findById(taskId).populate('assignedTo', 'name email'); // Populate assigned users (optional)
+
+        // If task is not found
+
+        console.log(task);
+
+        if (!task) {
+            return res.status(404).json({ message: 'Task not found' });
+        }
+
+        // Respond with the task details
+        res.status(200).json({ task, success: true });
+    } catch (error) {
+        console.error('Error fetching task:', error);
+        res.status(500).json({ message: 'Error fetching task' });
+    }
+};
+
+export const getTasksByUserAndStatus = async (req, res) => {
+    const { userId } = req.params; // Assuming userId is passed as a URL parameter
+
+    try {
+        // Fetch all tasks assigned to the user
+        const tasks = await Task.find({ assignedTo: userId });
+
+        // Separate tasks by status
+        const pendingTasks = tasks.filter(task => task.status === 'Pending');
+        const inProgressTasks = tasks.filter(task => task.status === 'In Progress');
+        const completedTasks = tasks.filter(task => task.status === 'Completed');
+
+        // Return tasks grouped by status
+        res.status(200).json({
+            pendingTasks,
+            inProgressTasks,
+            completedTasks,
+            success:true
+        });
+    } catch (error) {
+        console.error('Error fetching tasks:', error);
+        res.status(500).json({ message: 'Error fetching tasks' });
     }
 };

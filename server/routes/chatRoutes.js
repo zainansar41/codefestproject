@@ -49,26 +49,26 @@ router.post('/workspace/:workspaceId/chats', async (req, res) => {
 
 
 router.put('/chats/:chatId/read', async (req, res) => {
-    const { chatId } = req.params;
-    const { userId } = req.body; // Assuming user ID is sent in the request body
+  const { chatId } = req.params;
+  const { userId } = req.body; // Assuming user ID is sent in the request body
 
-    try {
-        // Find the chat message and update the `readBy` field
-        const chat = await Chat.findById(chatId);
-        if (!chat) {
-            return res.status(404).json({ message: 'Chat not found' });
-        }
-
-        // Add the user to the `readBy` array if they haven't already read it
-        if (!chat.readBy.includes(userId)) {
-            chat.readBy.push(userId);
-            await chat.save();
-        }
-
-        res.status(200).json({ message: 'Message marked as read', chat });
-    } catch (error) {
-        res.status(500).json({ message: 'Error marking message as read' });
+  try {
+    // Find the chat message and update the `readBy` field
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+      return res.status(404).json({ message: 'Chat not found' });
     }
+
+    // Add the user to the `readBy` array if they haven't already read it
+    if (!chat.readBy.includes(userId)) {
+      chat.readBy.push(userId);
+      await chat.save();
+    }
+
+    res.status(200).json({ message: 'Message marked as read', chat });
+  } catch (error) {
+    res.status(500).json({ message: 'Error marking message as read' });
+  }
 });
 
 

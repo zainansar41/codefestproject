@@ -15,6 +15,7 @@ router.delete('/workspaces/:workspaceId/members/:memberId',verifyUser ,workspace
 router.delete('/workspaces/:workspaceId',verifyUser ,workspaceRoutes.deleteWorkspace);
 router.get('/workspaces/user', verifyUser, workspaceRoutes.getWorkspacesByUserRole)
 router.get('/workspaces/:workspaceId', workspaceRoutes.getWorkspaceById);
+router.get('/workspace/:workspaceId/analytics', workspaceRoutes.getWorkspaceAnalytics);
 
 
 export default router;

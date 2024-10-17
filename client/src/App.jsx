@@ -10,6 +10,8 @@ import { ToastContainer } from 'react-toastify';
 import WorkspaceContent from "./Pages/WorkspaceContent";
 import InviteTeamLead from "./Pages/InviteTeamLead";
 import InviteMember from "./Pages/InviteMember";
+import TaskDetail from "./Pages/TaskDetail";
+import YourTask from "./Pages/YourTask";
 
 function App() {
   const location = useLocation();
@@ -27,8 +29,11 @@ function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/workspace" element={<Workspace />} /> {/* General workspace page */}
         <Route path="/workspace/:id" element={<WorkspaceContent />} /> {/* Dynamic path for individual workspaces */}
+        <Route path="/task-details/:id" element={<TaskDetail />} /> {/* Dynamic path for individual workspaces */}
         <Route path="/invite-team-lead" element={<InviteTeamLead />} /> {/* Dynamic path for individual workspaces */}
         <Route path="/invite-member" element={<InviteMember />} /> {/* Dynamic path for individual workspaces */}
+        <Route path="/invite-member" element={<InviteMember />} /> {/* Dynamic path for individual workspaces */}
+        <Route path="/your-task" element={<YourTask />} /> {/* Dynamic path for individual workspaces */}
       </Routes>
     </>
   );
