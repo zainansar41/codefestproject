@@ -5,15 +5,23 @@ dotenv.config();
 
 export const verifyUser = (req, res, next) => {
     console.log(req.user);
-    const token = req.header("x-auth-token");
+    const token = req.header("Authorization");
+    console.log(token);
+    
     if (!token) {
         return res.status(401).json({ message: "No token, authorization denied" });
     }
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        req.user = { id: decoded.id };
+        const decoded = jwt.verify(token, "secretkey");
+        req.user = { id: decoded.userId };
+        console.log(req.user);
+        
+        console.log("shdkjas hdkj");
+        
         next();
     } catch (error) {
+        console.log(error);
+        
         return res.status(401).json({ message: "No token, authorization denied" });
     }
 }

@@ -5,7 +5,7 @@ import { transporter, mailOptions } from './mail.js'; // Use the mail.js file
 
 
 export const createTask = async (req, res) => {
-    const { title, description, status, deadline, assignedTo, workspaceId } = req.body;
+    const { title, description, deadline, assignedTo, workspaceId } = req.body;
 
     try {
         // Find the workspace
@@ -18,7 +18,6 @@ export const createTask = async (req, res) => {
         const newTask = new Task({
             title,
             description,
-            status,
             deadline,
             assignedTo,
             workspace: workspace._id,
@@ -76,15 +75,18 @@ export const deleteTask = async (req, res) => {
 export const getTasksByWorkspace = async (req, res) => {
     const { workspaceId } = req.params;
 
+    console.log("asdjsa dasj, ", req.params);
+    
+
     try {
         // Find tasks related to the workspace
         const tasks = await Task.find({ workspace: workspaceId });
 
-        if (tasks.length === 0) {
-            return res.status(404).json({ message: 'No tasks found for this workspace' });
-        }
+        // if (tasks.length === 0) {
+        //     return res.status(404).json({ message: 'No tasks found for this workspace' });
+        // }
 
-        res.status(200).json({ tasks });
+        res.status(200).json({ tasks, success: true });
     } catch (error) {
         res.status(500).json({ message: 'Something went wrong' });
     }
@@ -236,9 +238,13 @@ export const changeTaskStatus = async (req, res) => {
     const { newStatus } = req.body; // Expecting the new status in the request body
     const userId = req.user.id; // Assuming user ID is stored in req.user
 
+    console.log("changeTaskStatus");
+    
+
     try {
         // Find the task
         const task = await Task.findById(taskId);
+
         if (!task) {
             return res.status(404).json({ message: 'Task not found' });
         }
@@ -258,8 +264,13 @@ export const changeTaskStatus = async (req, res) => {
         task.status = newStatus;
         await task.save();
 
-        res.status(200).json({ message: 'Task status updated successfully', task });
+        console.log(task);
+        
+
+        res.status(200).json({ message: 'Task status updated successfully', task, success:true });
     } catch (error) {
+        console.log(error);
+        
         res.status(500).json({ message: 'Something went wrong' });
     }
 };

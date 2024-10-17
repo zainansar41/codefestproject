@@ -13,6 +13,8 @@ router.get('/workspaces/:workspaceId/infowithmembers',verifyUser ,workspaceRoute
 router.delete('/workspaces/:workspaceId/teamlead',verifyUser,workspaceRoutes.removeTeamLead);
 router.delete('/workspaces/:workspaceId/members/:memberId',verifyUser ,workspaceRoutes.removeTeamMember);
 router.delete('/workspaces/:workspaceId',verifyUser ,workspaceRoutes.deleteWorkspace);
+router.get('/workspaces/user', verifyUser, workspaceRoutes.getWorkspacesByUserRole)
+router.get('/workspaces/:workspaceId', workspaceRoutes.getWorkspaceById);
 
 
 export default router;

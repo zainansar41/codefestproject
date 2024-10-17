@@ -4,19 +4,23 @@ import jwt from 'jsonwebtoken';
 import { transporter, mailOptions } from './mail.js'; // Using the mail.js file
 
 export const createWorkspace = async (req, res) => {
-    const { name, description, adminId } = req.body;
+    const { newWorkspaceName, newWorkspaceDescription } = req.body;
+    console.log(req.body);
+
 
     try {
         // Check if admin exists
-        const admin = await User.findById(adminId);
+        const admin = await User.findById(req.user.id);
         if (!admin) {
+            console.log("no User");
+
             return res.status(404).json({ message: 'Admin not found' });
         }
 
         // Create workspace
         const newWorkspace = new Workspace({
-            name,
-            description,
+            name: newWorkspaceName,
+            description: newWorkspaceDescription,
             admin: admin._id,
         });
 
@@ -29,7 +33,7 @@ export const createWorkspace = async (req, res) => {
 };
 
 export const sendTeamLeadInvitation = async (req, res) => {
-    const { workspaceId, teamLeadEmail } = req.body;
+    const { workspaceId, email } = req.body;
 
     try {
         // Find the workspace
@@ -44,8 +48,8 @@ export const sendTeamLeadInvitation = async (req, res) => {
 
         // Send email with the invitation link
         const emailOptions = {
-            from: mailOptions.senderEmail,
-            to: teamLeadEmail,
+            from: mailOptions.from,
+            to: email,
             subject: `Invitation to become Team Lead`,
             text: `Hi, You have been invited to become the Team Lead for the workspace: ${workspace.name}. Click here to accept the invitation: ${invitationLink}`,
         };
@@ -66,13 +70,21 @@ export const sendTeamLeadInvitation = async (req, res) => {
 export const acceptTeamLeadInvitation = async (req, res) => {
     const { token, teamLeadId } = req.body;
 
+    console.log(req.body);
+
+
     try {
         // Verify the token
         const decoded = jwt.verify(token, 'secretkey');
         const { workspaceId } = decoded;
 
+        console.log(workspaceId);
+
+
         // Find workspace and team lead
         const workspace = await Workspace.findById(workspaceId);
+        console.log(workspace);
+
         const teamLead = await User.findById(teamLeadId);
 
         if (!workspace) {
@@ -86,14 +98,19 @@ export const acceptTeamLeadInvitation = async (req, res) => {
         workspace.teamLead = teamLead._id;
         await workspace.save();
 
-        res.status(200).json({ message: 'Team Lead added successfully' });
+        console.log(workspace);
+
+
+        res.status(200).json({ message: 'Team Lead added successfully', success: true, workspaceid: workspace._id });
     } catch (error) {
+        console.log(error);
+
         res.status(500).json({ message: 'Invalid or expired token' });
     }
 };
 
 export const sendMemberInvitation = async (req, res) => {
-    const { workspaceId, memberEmails } = req.body;
+    const { workspaceId, email } = req.body;
 
     try {
         // Find the workspace
@@ -102,32 +119,28 @@ export const sendMemberInvitation = async (req, res) => {
             return res.status(404).json({ message: 'Workspace not found' });
         }
 
-        // Send invitation to each member
-        memberEmails.forEach((email) => {
-            // Generate invitation token (JWT)
-            const token = jwt.sign({ workspaceId }, 'secretkey', { expiresIn: '1h' });
-            const invitationLink = `http://yourapp.com/invite-member?token=${token}`;
+        const token = jwt.sign({ workspaceId }, 'secretkey', { expiresIn: '1h' });
+        const invitationLink = `http://localhost:3000/invite-member?token=${token}`;
 
-            // Email options
-            const emailOptions = {
-                from: mailOptions.senderEmail,
-                to: email,
-                subject: `Invitation to join workspace: ${workspace.name}`,
-                text: `Hi, You have been invited to join the workspace: ${workspace.name}. Click here to accept the invitation: ${invitationLink}`,
-            };
+        // Send email with the invitation link
+        const emailOptions = {
+            from: mailOptions.from,
+            to: email,
+            subject: `Invitation to become Team Lead`,
+            text: `Hi, You have been invited to become the Team Lead for the workspace: ${workspace.name}. Click here to accept the invitation: ${invitationLink}`,
+        };
 
-            // Send the email
-            transporter.sendMail(emailOptions, (error, info) => {
-                if (error) {
-                    console.log(`Error sending email to ${email}: ${error}`);
-                } else {
-                    console.log(`Invitation email sent to ${email}: ` + info.response);
-                }
-            });
+        transporter.sendMail(emailOptions, (error, info) => {
+            if (error) {
+                return res.status(500).json({ message: 'Error sending invitation email' });
+            }
+            console.log('Invitation email sent: ' + info.response);
         });
 
         res.status(200).json({ message: 'Invitations sent successfully' });
     } catch (error) {
+        console.log(error);
+        
         res.status(500).json({ message: 'Something went wrong' });
     }
 };
@@ -155,7 +168,7 @@ export const acceptMemberInvitation = async (req, res) => {
         workspace.members.push(member._id);
         await workspace.save();
 
-        res.status(200).json({ message: 'Member added to workspace successfully' });
+        res.status(200).json({ message: 'Member added to workspace successfully', success:true, workspaceId:workspace._id });
     } catch (error) {
         res.status(500).json({ message: 'Invalid or expired token' });
     }
@@ -246,5 +259,57 @@ export const deleteWorkspace = async (req, res) => {
         res.status(200).json({ message: 'Workspace deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: 'Something went wrong' });
+    }
+};
+
+export const getWorkspacesByUserRole = async (req, res) => {
+    const userId = req.user.id; // Assuming you're using JWT and have user ID in req.user
+
+    try {
+        // Find workspaces where the user is the admin
+        const createdWorkspaces = await Workspace.find({ admin: userId });
+
+        // Find workspaces where the user is the team lead
+        const teamLeadWorkspaces = await Workspace.find({ teamLead: userId });
+
+        // Find workspaces where the user is a team member
+        const teamMemberWorkspaces = await Workspace.find({ members: userId });
+
+        // Respond with the three lists
+        res.status(200).json({
+            createdWorkspaces,
+            teamLeadWorkspaces,
+            teamMemberWorkspaces
+        });
+    } catch (error) {
+        console.error("Error fetching workspaces:", error);
+        res.status(500).json({ message: 'Error fetching workspaces' });
+    }
+};
+
+export const getWorkspaceById = async (req, res) => {
+    const { workspaceId } = req.params;
+    console.log(workspaceId);
+
+
+    try {
+        // Find workspace by ID and populate relevant fields
+        const workspace = await Workspace.findById(workspaceId)
+            .populate('admin', 'name email')   // Populate admin details (optional)
+            .populate('teamLead', 'name email') // Populate team lead details (optional)
+            .populate('members', 'name email'); // Populate team member details (optional)
+
+        // If workspace not found
+        if (!workspace) {
+            return res.status(404).json({ message: 'Workspace not found' });
+        }
+
+        // Respond with the workspace details
+        console.log(workspace);
+
+        res.status(200).json({ workspace, success: true });
+    } catch (error) {
+        console.error("Error fetching workspace:", error);
+        res.status(500).json({ message: 'Error fetching workspace' });
     }
 };
